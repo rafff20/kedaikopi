@@ -8,4 +8,72 @@ document.addEventListener("alpine:init", () => {
       { id: 5, name: "Sumatra Mandheling", img: "5.jpg", price: 21000 },
     ],
   }));
+
+  // kalo bingung cek ngobar#43 menit 42
+  Alpine.store("cart", {
+    items: [],
+    total: 0,
+    quantity: 0,
+    add(newItem) {
+      // cek apakah ada barang yang sama di cart
+      const cartItem = this.items.find((item) => item.id === newItem.id);
+
+      // jika belum ada / cart masih kosong
+      if (!cartItem) {
+        this.items.push({ ...newItem, quantity: 1, total: newItem.price });
+        this.quantity++;
+        this.total += newItem.price;
+      } else {
+        this.items = this.items.map((item) => {
+          // jika barang berbeda
+          if (item.id !== newItem.id) {
+            return item;
+          } else {
+            // Jika barang sudah ada, tambah quantity dan totalnya
+            item.quantity++;
+            item.total = item.price * item.quantity;
+            this.quantity++;
+            this.total += item.price;
+            return item;
+          }
+        });
+      }
+    },
+    remove(id) {
+      // ambil item yang mau diremove berdasarkan id
+      const cartItem = this.items.find((item) => item.id === id);
+
+      // jika item lebih dari 1
+      if (cartItem.quantity > 1) {
+        // Telusuri satu-satu
+        this.items = this.items.map((item) => {
+          // jika bukan barang yang diklik maka di skip
+          if (item.id !== id) {
+            return item;
+          } else {
+            item.quantity--;
+            item.total = item.price * item.quantity;
+            this.quantity--;
+            this.total -= item.price;
+            return item;
+          }
+        });
+      } else if (cartItem.quantity === 1) {
+        // jika barangnya sisa 1
+        this.items = this.items.filter((item) => item.id !== id);
+        this.quantity--;
+        this.total -= cartItem.price;
+      }
+    },
+  });
 });
+
+// Konversi ke rupiah
+//variable rupiah menerima parameter number dari harga barang diatas, kemudia akan mengembalikan intl
+const rupiah = (number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(number);
+};
